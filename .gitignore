@@ -1,0 +1,10 @@
+__pycache__/
+*/__pycache__/
+*.py[cod]
+.venv/
+results/
+
+slurm-*.out
+tmp_*.png
+
+logs/*.out
