@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>ADAS: Attention-Discounted Adaptive Sampler for Masked Diffusion Language Models</title>
+  <meta name="description" content="ADAS is a training-free reranking rule for parallel masked diffusion decoding that discounts token confidence by attention to already selected, uncertain positions.">
+  <meta name="keywords" content="masked diffusion language models, parallel decoding, diffusion LLM, sampling, LLaDA, Dream, NeurIPS 2026">
+  <meta name="author" content="Yusuf Sahin, Ahmed Rockey Saikia, Volkan Cevher, Paolo Favaro">
+
+  <!-- Open Graph / Twitter -->
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="Attention-Discounted Adaptive Sampler for Masked Diffusion Language Models">
+  <meta property="og:description" content="A training-free reranking rule for parallel masked diffusion decoding. +9.11 / +10.46 points at matched low NFE on LLaDA-8B / Dream-7B with 3.1% overhead.">
+  <meta property="og:url" content="https://yusufsahin99.github.io/ADAS/">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Attention-Discounted Adaptive Sampler for Masked Diffusion Language Models">
+
+  <!-- Google Scholar -->
+  <meta name="citation_title" content="Attention-Discounted Adaptive Sampler for Masked Diffusion Language Models">
+  <meta name="citation_author" content="Sahin, Yusuf">
+  <meta name="citation_author" content="Saikia, Ahmed Rockey">
+  <meta name="citation_author" content="Cevher, Volkan">
+  <meta name="citation_author" content="Favaro, Paolo">
+  <meta name="citation_publication_date" content="2026">
+  <meta name="citation_conference_title" content="Advances in Neural Information Processing Systems (NeurIPS)">
+  <meta name="citation_pdf_url" content="https://arxiv.org/pdf/2606.10829">
+  <meta name="citation_arxiv_id" content="2606.10829">
+
+  <link rel="stylesheet" href="static/css/bulma.min.css">
+  <link rel="stylesheet" href="static/css/index.css">
+  <link rel="stylesheet" href="static/css/academicons.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    html, body { background-color: #ffffff; }
+    .equation { font-size: 1.15rem; overflow-x: auto; padding: 0.5rem 0; }
+    .method-steps { text-align: left; }
+    .table-container { margin: 1.5rem 0 0.5rem; }
+    .table td, .table th { vertical-align: middle; white-space: nowrap; font-variant-numeric: tabular-nums; }
+    .table thead th { text-align: center !important; }
+    .table td { text-align: center; }
+    .table td:first-child, .table th:first-child { text-align: left !important; }
+    .table tr.is-average td { font-weight: 700; background: #f1f5f9; }
+    .table-caption { font-size: 0.95rem; color: #64748b; }
+    .figure-caption { font-size: 0.95rem; color: #64748b; margin-top: 0.75rem; text-align: left; }
+    .result-figure { width: 100%; height: auto; border: 1px solid #e2e8f0; border-radius: 8px; }
+    .publication-venue-line { color: #64748b; font-weight: 600; }
+    .key-numbers { margin-top: 1.5rem; }
+    .key-numbers .heading { color: #64748b; letter-spacing: 0.02em; text-transform: none; font-size: 0.9rem; }
+    .key-numbers .key-value { font-size: 2rem; font-weight: 800; color: #1e293b; line-height: 1.2; margin-bottom: 0.25rem; }
+  </style>
+
+  <script>
+    window.MathJax = { tex: { inlineMath: [['\\(', '\\)']], displayMath: [['\\[', '\\]']] }, svg: { fontCache: 'global' } };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-svg.js"></script>
+  <script defer src="static/js/fontawesome.all.min.js"></script>
+  <script defer src="static/js/index.js"></script>
+</head>
+<body>
+
+  <button class="scroll-to-top" onclick="scrollToTop()" title="Scroll to top" aria-label="Scroll to top">
+    <i class="fas fa-chevron-up"></i>
+  </button>
+
+  <main id="main-content">
+
+  <!-- Title, authors, links -->
+  <section class="hero">
+    <div class="hero-body">
+      <div class="container is-max-desktop">
+        <div class="columns is-centered">
+          <div class="column has-text-centered">
+            <h1 class="title is-2 publication-title">Attention-Discounted Adaptive Sampler for Masked Diffusion Language Models</h1>
+            <div class="is-size-5 publication-authors">
+              <span class="author-block">Yusuf Sahin<sup>1</sup>,</span>
+              <span class="author-block">Ahmed Rockey Saikia<sup>2</sup>,</span>
+              <span class="author-block">Volkan Cevher<sup>2</sup>,</span>
+              <span class="author-block">Paolo Favaro<sup>1</sup></span>
+            </div>
+
+            <div class="is-size-5 publication-authors">
+              <span class="author-block"><sup>1</sup>University of Bern,</span>
+              <span class="author-block"><sup>2</sup>EPFL</span>
+              <br>
+              <span class="publication-venue-line">NeurIPS 2026</span>
+            </div>
+
+            <div class="column has-text-centered">
+              <div class="publication-links">
+                <span class="link-block">
+                  <a href="https://arxiv.org/pdf/2606.10829" target="_blank" class="external-link button is-normal is-rounded is-dark">
+                    <span class="icon"><i class="fas fa-file-pdf"></i></span>
+                    <span>Paper</span>
+                  </a>
+                </span>
+                <span class="link-block">
+                  <a href="https://github.com/yusufsahin99/ADAS" target="_blank" class="external-link button is-normal is-rounded is-dark">
+                    <span class="icon"><i class="fab fa-github"></i></span>
+                    <span>Code</span>
+                  </a>
+                </span>
+                <span class="link-block">
+                  <a href="https://arxiv.org/abs/2606.10829" target="_blank" class="external-link button is-normal is-rounded is-dark">
+                    <span class="icon"><i class="ai ai-arxiv"></i></span>
+                    <span>arXiv</span>
+                  </a>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Teaser -->
+  <section class="hero teaser">
+    <div class="container is-max-desktop">
+      <div class="hero-body">
+        <h2 class="subtitle has-text-centered">
+          Parallel samplers for masked diffusion LMs decide <em>how many</em> tokens to reveal per step, but rank candidates one token at a time.
+          <strong>ADAS</strong> reranks them so that a token attending strongly to an already chosen, still uncertain token waits for the next step.
+          It is training-free and keeps the sampler's stopping rule unchanged.
+        </h2>
+        <nav class="level key-numbers">
+          <div class="level-item has-text-centered">
+            <div>
+              <p class="key-value">+9.11</p>
+              <p class="heading">points, LLaDA-8B-Base</p>
+            </div>
+          </div>
+          <div class="level-item has-text-centered">
+            <div>
+              <p class="key-value">+10.46</p>
+              <p class="heading">points, Dream-7B-Base</p>
+            </div>
+          </div>
+          <div class="level-item has-text-centered">
+            <div>
+              <p class="key-value">3.1%</p>
+              <p class="heading">overhead per forward pass</p>
+            </div>
+          </div>
+        </nav>
+        <p class="has-text-centered table-caption">Average gains at matched denoiser evaluations in the low-NFE regime, over GSM8K, MATH500, HumanEval and MBPP and over the Top-k, Fast-dLLM and EB-Sampler stopping rules.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Abstract -->
+  <section class="section hero is-light">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered has-text-centered">
+        <div class="column is-four-fifths">
+          <h2 class="title is-3">Abstract</h2>
+          <div class="content has-text-justified">
+            <p>
+              Masked diffusion language models can reduce inference steps by revealing multiple tokens per denoising iteration, but this parallelism is fragile: positions that are individually confident may be unsafe to commit together when their predictions are coupled. Existing training-free samplers such as Top-k, Fast-dLLM, and EB-Sampler mainly control how many tokens to reveal, while often ranking candidates by token-wise scores that ignore interactions within the selected set. We propose ADAS, a training-free reranking rule that leaves the base sampler's stopping rule unchanged and greedily discounts each token-wise confidence score according to its attention to already selected positions, weighted by their prediction uncertainty. Across LLaDA-8B-Base and Dream-7B-Base on the reasoning benchmarks GSM8K and MATH500 and the code benchmarks HumanEval and MBPP, plugging ADAS into all three samplers improves low-NFE performance at matched denoiser evaluations by 9.11 and 10.46 percentage points on average, respectively, with 3.1% per-forward runtime overhead.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Method -->
+  <section class="section">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered has-text-centered">
+        <div class="column is-four-fifths">
+          <h2 class="title is-3">Method</h2>
+          <div class="content has-text-justified">
+            <p>
+              At each denoising step, let \(M\) be the masked positions and \(S\) the positions already selected for unmasking in this step.
+              ADAS builds \(S\) greedily. Each remaining candidate \(i \in M \setminus S\) is scored by its marginal utility
+            </p>
+            <div class="equation has-text-centered">
+              \[ u(i \mid S) \;=\; c_i \;-\; \alpha \sum_{s \in S} A_{is}\,\bigl(1 - c_s\bigr), \]
+            </div>
+            <p>
+              where \(c_i\) is the token confidence at position \(i\), \(A_{is}\) is the attention from candidate \(i\) to selected position \(s\)
+              (final layer, averaged over heads), and \(1 - c_s\) measures how uncertain the selected prediction still is.
+              A candidate is penalized for attending to a selected position whose prediction is unreliable, not merely for being coupled to it.
+              We use \(\alpha = 40\) in every main experiment.
+            </p>
+            <ol class="method-steps">
+              <li>Pick the remaining candidate with the highest \(u(i \mid S)\).</li>
+              <li>Ask the base sampler whether the enlarged set is still admissible: \(|S| \le k\) for Top-k, the confidence condition for Fast-dLLM, or the entropy budget for EB-Sampler. If not, stop.</li>
+              <li>Add the candidate to \(S\) and subtract \(\alpha A_{is}(1 - c_s)\) from every other candidate's score. Updates are incremental, so selection costs \(O(|S|\,|M|)\).</li>
+            </ol>
+            <p>
+              ADAS changes only the order in which candidates are proposed. The stopping rule still decides how many positions are unmasked,
+              so the same update plugs into fixed-cardinality, confidence-threshold and entropy-budget samplers.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Dependency diagnostic -->
+  <section class="section hero is-light">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered has-text-centered">
+        <div class="column is-four-fifths">
+          <h2 class="title is-3">Does attention track dependence?</h2>
+          <div class="content has-text-justified">
+            <p>
+              We run confidence Top-k decoding (\(k = 8\)) on 100 problems per benchmark. At each probed state we reveal the most confident masked position \(i\)
+              in a counterfactual copy and measure how much the distribution at each co-selected position \(j\) shifts, \(K_j = D_{\mathrm{KL}}(p^0_j \,\|\, p^i_j)\).
+              This gives 500 states and 3,500 pairs per benchmark and model.
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="table-container">
+            <table class="table is-fullwidth is-hoverable">
+              <thead>
+                <tr>
+                  <th>Task</th><th>Model</th>
+                  <th>\(\bar\rho_s(A_{ji}, K_j)\)</th>
+                  <th>\(\rho(A_{ji}, K_j)\)</th>
+                  <th>\(\rho(u_{ji}, K_j)\)</th>
+                  <th>\(\bar\rho_s(c^0_j, K_j)\)</th>
+                  <th>\(\bar\rho_s(s_j, K_j)\)</th>
+                  <th>Gain</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td rowspan="2">GSM8K</td><td>Dream</td><td>.358</td><td>.311</td><td>.823</td><td>.045</td><td>−.281</td><td>+.325</td></tr>
+                <tr><td>LLaDA</td><td>.360</td><td>.463</td><td>.835</td><td>.076</td><td>−.330</td><td>+.405</td></tr>
+                <tr><td rowspan="2">HumanEval</td><td>Dream</td><td>.305</td><td>.423</td><td>.782</td><td>−.030</td><td>−.209</td><td>+.178</td></tr>
+                <tr><td>LLaDA</td><td>.389</td><td>.544</td><td>.841</td><td>.100</td><td>−.363</td><td>+.463</td></tr>
+                <tr><td rowspan="2">MBPP</td><td>Dream</td><td>.204</td><td>.284</td><td>.791</td><td>−.114</td><td>−.211</td><td>+.097</td></tr>
+                <tr><td>LLaDA</td><td>.251</td><td>.327</td><td>.794</td><td>−.023</td><td>−.215</td><td>+.193</td></tr>
+                <tr><td rowspan="2">MATH500</td><td>Dream</td><td>.316</td><td>.298</td><td>.806</td><td>−.079</td><td>−.271</td><td>+.193</td></tr>
+                <tr><td>LLaDA</td><td>.436</td><td>.545</td><td>.815</td><td>.116</td><td>−.279</td><td>+.395</td></tr>
+              </tbody>
+            </table>
+      </div>
+      <div class="columns is-centered has-text-centered">
+        <div class="column is-four-fifths">
+          <p class="table-caption has-text-left">
+            \(\bar\rho_s\) is the mean statewise Spearman correlation and \(\rho\) correlates all pairs. \(u_{ji} = A_{ji}(1 - c^0_i)\) is uncertainty-gated attention and
+            \(s_j = c^0_j - 40\,u_{ji}\) is the ADAS score. A positive Gain means the ADAS score is more negatively associated with the KL shift than confidence alone.
+          </p>
+          <div class="content has-text-justified" style="margin-top:1.25rem">
+            <p>
+              Attention is positively correlated with the KL shift in every setting, and gating it by uncertainty raises the all-pairs correlation from .28–.55 to .78–.84.
+              Where ADAS and confidence ranking first diverge (1,098 states), the tokens ADAS defers have mean KL .793 against .230 for the replacements it picks,
+              so it delays exactly the tokens whose predictions would change most once their neighbor is revealed.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Results -->
+  <section class="section">
+    <div class="container is-max-desktop">
+      <h2 class="title is-3 has-text-centered">Results</h2>
+      <div class="content has-text-justified">
+        <p>
+          Moving right in each panel reveals more tokens per denoising step, which means fewer denoiser evaluations.
+          Solid lines use ADAS reranking and dashed lines are the vanilla stopping rules. The bottom row compares the ADAS variants with KLASS and DAPD.
+        </p>
+      </div>
+
+      <figure>
+        <img class="result-figure" src="static/images/llada_main_results.png" alt="LLaDA-8B-Base accuracy versus number of parallel tokens on GSM8K, HumanEval, MATH500 and MBPP for EB, Fast-dLLM, Top-k, KLASS and DAPD, with and without ADAS" loading="lazy" width="2362" height="1806">
+        <figcaption class="figure-caption">
+          <strong>LLaDA-8B-Base.</strong> Rows: entropy budget, Fast-dLLM, fixed Top-k, and prior baselines. Columns: GSM8K, HumanEval, MATH500, MBPP.
+          ADAS keeps accuracy substantially higher in the highly parallel regime and matches the base samplers when few tokens are revealed per step.
+          <a href="https://github.com/yusufsahin99/ADAS/blob/main/assets/llada_main_results.pdf" target="_blank">PDF</a>
+        </figcaption>
+      </figure>
+
+      <figure style="margin-top:2.5rem">
+        <img class="result-figure" src="static/images/dream_main_results.png" alt="Dream-7B-Base accuracy versus number of parallel tokens on GSM8K, HumanEval, MATH500 and MBPP for EB, Fast-dLLM, Top-k, KLASS and DAPD, with and without ADAS" loading="lazy" width="2364" height="1806">
+        <figcaption class="figure-caption">
+          <strong>Dream-7B-Base.</strong> Same layout. The pattern holds: the base samplers degrade sharply as parallelism grows, while their ADAS variants degrade gradually.
+          <a href="https://github.com/yusufsahin99/ADAS/blob/main/assets/dream_main_results.pdf" target="_blank">PDF</a>
+        </figcaption>
+      </figure>
+
+      <h3 class="title is-4" style="margin-top:3rem">Matched-NFE gains</h3>
+      <div class="table-container">
+        <table class="table is-fullwidth is-hoverable">
+          <thead>
+            <tr><th>Dataset</th><th>EB</th><th>Fast-dLLM</th><th>Top-k</th><th>Avg. over methods</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>GSM8K</td><td>+9.22 / +14.31</td><td>+6.92 / +6.36</td><td>+11.90 / +5.88</td><td>+9.35 / +8.85</td></tr>
+            <tr><td>MATH500</td><td>+6.49 / +4.84</td><td>+5.70 / +2.15</td><td>+10.73 / +6.93</td><td>+7.64 / +4.64</td></tr>
+            <tr><td>HumanEval</td><td>+10.45 / +15.63</td><td>+6.90 / +12.03</td><td>+9.55 / +10.77</td><td>+8.97 / +12.81</td></tr>
+            <tr><td>MBPP</td><td>+10.37 / +15.01</td><td>+7.39 / +12.04</td><td>+13.67 / +19.60</td><td>+10.48 / +15.55</td></tr>
+            <tr class="is-average"><td>Avg. over datasets</td><td>+9.13 / +12.45</td><td>+6.73 / +8.14</td><td>+11.46 / +10.80</td><td>+9.11 / +10.46</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="table-caption">
+        Absolute gains in percentage points, reported as LLaDA-8B-Base / Dream-7B-Base. For every baseline point averaging at least four tokens per step,
+        the ADAS curve is interpolated at the same NFE. Across 90 matched operating points the mean gain is +9.27 (95% bootstrap interval [+7.74, +10.84]),
+        with 80 improvements and 10 regressions.
+      </p>
+    </div>
+  </section>
+
+  <!-- Code -->
+  <section class="section hero is-light">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered has-text-centered">
+        <div class="column is-four-fifths">
+          <h2 class="title is-3">Code</h2>
+          <div class="content has-text-justified">
+            <p>
+              The <a href="https://github.com/yusufsahin99/ADAS" target="_blank">implementation</a> supports Dream-7B-Base and LLaDA-8B-Base through lm-eval-harness.
+              Use <code>sampler=attention_discounted</code> and pick a variant:
+            </p>
+          </div>
+          <div class="table-container">
+            <table class="table is-fullwidth">
+              <thead><tr><th>Stopping rule</th><th>Vanilla ranking</th><th>ADAS ranking</th></tr></thead>
+              <tbody>
+                <tr><td>Fixed Top-k</td><td><code>confidence_topk</code></td><td><code>attention_discounted</code></td></tr>
+                <tr><td>EB-Sampler</td><td><code>eb_entropy</code></td><td><code>attention_discount_ab_budget_eb_stop</code></td></tr>
+                <tr><td>Fast-dLLM</td><td><code>fast_dllm</code></td><td><code>ad_fast_dllm</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- BibTeX -->
+  <section class="section" id="BibTeX">
+    <div class="container is-max-desktop content">
+      <div class="bibtex-header">
+        <h2 class="title">BibTeX</h2>
+        <button class="copy-bibtex-btn" onclick="copyBibTeX()" title="Copy BibTeX to clipboard">
+          <i class="fas fa-copy"></i>
+          <span class="copy-text">Copy</span>
+        </button>
+      </div>
+      <pre id="bibtex-code"><code>@misc{sahin2026attentiondiscounted,
+  title         = {Attention-Discounted Adaptive Sampler for Masked Diffusion Language Models},
+  author        = {Sahin, Yusuf and Saikia, Ahmed Rockey and Cevher, Volkan and Favaro, Paolo},
+  year          = {2026},
+  eprint        = {2606.10829},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.CL},
+  url           = {https://arxiv.org/abs/2606.10829}
+}</code></pre>
+    </div>
+  </section>
+
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="columns is-centered">
+        <div class="column is-8">
+          <div class="content">
+            <p>
+              This page was built using the <a href="https://github.com/eliahuhorwitz/Academic-project-page-template" target="_blank">Academic Project Page Template</a> which was adopted from the <a href="https://nerfies.github.io" target="_blank">Nerfies</a> project page.
+              You are free to borrow the source code of this website, we just ask that you link back to this page in the footer. <br> This website is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/" target="_blank">Creative Commons Attribution-ShareAlike 4.0 International License</a>.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>
